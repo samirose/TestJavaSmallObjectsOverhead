@@ -1,75 +1,90 @@
 package com.github.samirose.TestJavaSmallObjectsOverhead;
 
 import java.math.BigInteger;
+import java.util.Random;
 
-public enum Test {
+import com.google.caliper.Param;
+import com.google.caliper.Runner;
+import com.google.caliper.SimpleBenchmark;
 
-	PRIMITIVES("Uses primitive local variables for intermediate results") {
-		public EndResult run(int[] testData) {
-			long sum = 0, count = 0;
+public class Test extends SimpleBenchmark {
+
+	@Param({"100", "1000", "10000"})
+	int size;
+	private int[] testData;
+
+	@Override
+	protected void setUp() {
+		Random rand = new Random();
+		testData = new int[size];
+		for (int i=0; i < size; ++i) {
+			testData[i] = rand.nextInt();
+		}
+	}
+
+	public EndResult timePrimitiveLocals(int reps) {
+		long sum = 0, count = 0;
+		for (int r = 0; r < reps; ++r) {
 			for (int i : testData) {
 				++count;
 				sum += i;
 			}
-			return new EndResult(sum, count);
 		}
-	},
+		return new EndResult(sum, count);
+	}
 
-	MUTABLE("Uses a single, mutable object for intermediate results") {
-		public EndResult run(int[] testData) {
-			MutableResult result = new MutableResult();
+	public EndResult timeMutableObject(int reps) {
+		MutableResult result = new MutableResult();
+		for (int r = 0; r < reps; ++r) {
 			for (int i : testData) {
 				result.add(i);
 			}
-			return result.asEndResult();
 		}
-	},
+		return result.asEndResult();
+	}
 
-	FINAL_MUTABLE("Uses a single mutable object of final class for intermediate results") {
-		public EndResult run(int[] testData) {
-			FinalMutableResult result = new FinalMutableResult();
+	public EndResult timeFinalMutableObject(int reps) {
+		FinalMutableResult result = new FinalMutableResult();
+		for (int r = 0; r < reps; ++r) {
 			for (int i : testData) {
 				result.add(i);
 			}
-			return result.asEndResult();
 		}
-	},
+		return result.asEndResult();
+	}
 
-	IMMUTABLE("Uses reference to an immutable object for intermediate results") {
-		public EndResult run(int[] testData) {
-			ImmutableResult result = new ImmutableResult();
+	public EndResult timeImmutable(int reps) {
+		ImmutableResult result = new ImmutableResult();
+		for (int r = 0; r < reps; ++r) {
 			for (int i : testData) {
 				result = result.add(i);
 			}
-			return result.asEndResult();
 		}
-	},
+		return result.asEndResult();
+	}
 
-	FINAL_IMMUTABLE("Uses reference to an immutable object of final class for intermediate results") {
-		public EndResult run(int[] testData) {
-			FinalImmutableResult result = new FinalImmutableResult();
+	public EndResult timeFinalImmutable(int reps) {
+		FinalImmutableResult result = new FinalImmutableResult();
+		for (int r = 0; r < reps; ++r) {
 			for (int i : testData) {
 				result = result.add(i);
 			}
-			return result.asEndResult();
 		}
-	},
+		return result.asEndResult();
+	}
 
-	BIGINTEGER("Uses local BigInteger variables for intermediate results") {
-		public EndResult run(int[] testData) {
-			BigInteger sum = BigInteger.ZERO, count = BigInteger.ZERO;
+	public EndResult timeBigInteger(int reps) {
+		BigInteger sum = BigInteger.ZERO, count = BigInteger.ZERO;
+		for (int r = 0; r < reps; ++r) {
 			for (int i : testData) {
 				count = count.add(BigInteger.ONE);
 				sum = sum.add(BigInteger.valueOf(i));
 			}
-			return new EndResult(sum.longValue(), count.longValue());
 		}
-	};
-
-	private Test(String description) {
-		this.description = description;
+		return new EndResult(sum.longValue(), count.longValue());
 	}
 
-	public final String description;
-	public abstract EndResult run(int[] testData);
+	public static void main(String[] args) throws Exception {
+		Runner.main(Test.class, args);
+	}
 }
